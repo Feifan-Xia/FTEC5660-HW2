@@ -95,8 +95,11 @@ WORKFLOW
    identity/current city when useful; display names can differ and original_name
    holds the legal name. Hometown, headline, descriptions, network activity,
    interests and total years_experience are outside the discrepancy fields.
-   Focus tool calls on search/profile retrieval. Omit hometown, headline,
-   descriptions and other out-of-scope fields from the final checks entirely.
+   Focus tool calls on search/profile retrieval. Put hometown, headline,
+   descriptions and other out-of-scope text in an optional excluded list.
+   The primary city/country at the start of the contact line is the current
+   location. A secondary place after a separator can be hometown/background;
+   check Facebook if needed instead of assuming two current residences.
 4. Compare EVERY claim to the selected profile, with one check per atomic fact.
    A single confirmed mismatch makes the whole CV discrepant. Check dates
    exactly, including start years, graduation years and Present/current roles.
@@ -112,15 +115,25 @@ WORKFLOW
    the chosen profile differs on most independent identity anchors.
 5. Return ONLY the JSON object below, after making real profile tool calls.
    Use all five check categories, and cover every claimed field. Each category
-   is a list of {claim, evidence, status}; status is match, mismatch, unresolved
+   is a list of {attribute, claim, evidence, status}; status is match, mismatch, unresolved
    or not_claimed. Use not_claimed only for categories absent from the CV.
    Evidence must cite the actual fetched profile values, including years and
    seniority where applicable. identity is matched or uncertain.
+   Attribute MUST be from the following exhaustive lists:
+   name: name; city: city (one combined current city/country check only);
+   experience: company, title, seniority, start_year, end_year;
+   education: degree, school, field, end_year; skills: name.
+   Split each job/education into its atomic attributes. All skill names in
+   the CV must appear separately. An asserted skill absent from the complete
+   profile's skill list is a mismatch under this dataset's grading rules.
+   Put job responsibilities, headline and hometown only in excluded, never
+   in checks. When a category is absent, use its allowed attribute with
+   status not_claimed. The city category has exactly one entry.
 
 {"person_id": 123, "identity": "matched", "checks": {
- "name": [{"claim": "...", "evidence": "...", "status": "match"}],
+ "name": [{"attribute": "name", "claim": "...", "evidence": "...", "status": "match"}],
  "city": [], "experience": [], "education": [], "skills": []},
- "summary": "brief conclusion"}
+ "excluded": ["out-of-scope CV text, if any"], "summary": "brief conclusion"}
 """
 
 
@@ -165,13 +178,18 @@ def _assessment_score(result: dict[str, Any]) -> tuple[float, dict[str, Any]]:
         raise ValueError("Assessment must reference an actually retrieved profile")
     checks = report.get("checks", {})
     statuses = []
-    for field in ("name", "city", "experience", "education", "skills"):
+    allowed = {"name": {"name"}, "city": {"city"},
+               "experience": {"company", "title", "seniority", "start_year", "end_year"},
+               "education": {"degree", "school", "field", "end_year"}, "skills": {"name"}}
+    for field in allowed:
         entries = checks.get(field)
         if not isinstance(entries, list) or not entries:
             raise ValueError(f"Missing check category: {field}")
+        if field == "city" and len(entries) != 1:
+            raise ValueError("City needs one current-city check; put hometown/background in excluded")
         for entry in entries:
-            if field == "city" and re.match(r"(?i)^\s*hometown\b", str(entry.get("claim", ""))):
-                continue  # The assignment explicitly excludes hometown.
+            if entry.get("attribute") not in allowed[field]:
+                raise ValueError(f"Invalid attribute in {field}; allowed: {sorted(allowed[field])}")
             status = entry.get("status")
             if status not in {"match", "mismatch", "unresolved", "not_claimed"}:
                 raise ValueError("Invalid check status")
@@ -279,14 +297,17 @@ async def score_cvs(agent: Any, cvs: dict[str, str]) -> dict[str, float | None]:
                         )
                         try:
                             return _assessment_score(result)
-                        except (ValueError, TypeError, KeyError, AttributeError):
+                        except (ValueError, TypeError, KeyError, AttributeError) as exc:
                             if attempt:
                                 raise
                             messages = list(result["messages"]) + [{
                                 "role": "user", "content": (
                                     "Complete the assessment using actual MCP profile evidence. "
+                                    f"Validation issue: {str(exc)[:250]}. "
                                     "Resolve identity and include nonempty lists for all five "
-                                    "check categories. Return only the required JSON object."
+                                    "check categories, using only their allowed attributes. "
+                                    "Put job descriptions/headline/hometown in excluded. "
+                                    "Return only the required JSON object."
                                 ),
                             }]
                     raise ValueError("Incomplete assessment")

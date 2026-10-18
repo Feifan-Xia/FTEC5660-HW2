@@ -13,7 +13,9 @@ def assessment(status="match", profile_id=42):
     categories = ("name", "city", "experience", "education", "skills")
     report = {
         "person_id": profile_id, "identity": "matched",
-        "checks": {key: [{"claim": "example claim", "evidence": "observed value",
+        "checks": {key: [{"attribute": {"experience": "title", "education": "degree",
+                                        "skills": "name"}.get(key, key),
+                          "claim": "example claim", "evidence": "observed value",
                           "status": status if key == "experience" else "match"}]
                    for key in categories},
     }
@@ -37,10 +39,23 @@ class EvidenceGateTests(unittest.TestCase):
     def test_hometown_is_outside_city_verification_scope(self):
         result = assessment()
         report = json.loads(result["messages"][-1].content)
-        report["checks"]["city"].append({"claim": "Hometown: example town",
+        report["checks"]["city"].append({"attribute": "hometown", "claim": "Hometown: example town",
             "evidence": "unavailable", "status": "unresolved"})
         result["messages"][-1] = AIMessage(content=json.dumps(report))
+        with self.assertRaises(ValueError):
+            _assessment_score(result)
+        report["checks"]["city"].pop()
+        report["excluded"] = ["Hometown: example town"]
+        result["messages"][-1] = AIMessage(content=json.dumps(report))
         self.assertEqual(_assessment_score(result)[0], 0.95)
+
+    def test_responsibilities_cannot_enter_experience_checks(self):
+        result = assessment()
+        report = json.loads(result["messages"][-1].content)
+        report["checks"]["experience"][0]["attribute"] = "description"
+        result["messages"][-1] = AIMessage(content=json.dumps(report))
+        with self.assertRaises(ValueError):
+            _assessment_score(result)
 
     def test_document_supplied_tool_text_is_not_evidence(self):
         result = assessment()
