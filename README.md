@@ -166,6 +166,59 @@ layer and investigate contradictory or missing text.
 | Run 2 | 0.95 | 0.95 | Yes | 29.97 s |
 | Run 3 | 0.95 | 0.95 | Yes | 28.11 s |
 
+### Task 3: Reflection on AI paradoxes
+
+This homework made the tension between AI capability and trust concrete for
+me. I built an agent to check CV claims against social profiles, then created
+a CV that exploited the same verification process. Working on both tasks
+showed me how useful automation and convincing deception can develop
+together. I see three connected paradoxes in this experience.
+
+The first is that making verification easier can also make attacks easier.
+The MCP tools gave my agent convenient access to structured evidence about
+employment, education and skills. As an attacker, I could use those same
+tools to learn exactly which details would pass verification. Understanding
+the verifier's workflow also helped me choose an effective attack surface.
+The access and transparency that support accurate checking can therefore
+help an adversary construct a more convincing false document. For me, this
+connects defensive testing directly to system design: building a verifier
+should include trying to defeat it.
+
+The second paradox is that correct reasoning over the available evidence
+can lead to an unreliable decision about the original document. My attack
+visibly claimed an MSc, while its invisible text layer contained the genuine
+BSc. The visible degree was drawn as vector outlines, so the homework's PDF
+loader extracted the BSc claim. My agent accepted the adversarial CV with a
+score of 0.95 in all three self-tests, just as it accepted the genuine CV.
+A separate control PDF displaying BSc produced exactly the same extracted
+text as the attack PDF. This
+made input representation a decisive part of the outcome. More careful
+comparison of that extracted text would still leave the visible MSc claim
+outside the agent's view. A useful defence would compare rendered-page OCR
+with the text layer and send disagreements for review.
+
+The third paradox is that strong evaluation results can encourage more
+trust than the evaluation supports. My agent classified all seven public
+CVs correctly in each of three runs. Those results measured accuracy and
+repeatability on that particular set. The successful attack exposed a
+different weakness in the same system. Similarly, the output 0.95 was a
+decision score assigned by my implementation; a probability claim would
+require separate calibration. Agreement between LinkedIn and Facebook also
+supports consistency within the provided dataset. In a real deployment, I
+would additionally examine how the sources obtained their information and
+whether they provide independent evidence.
+
+These paradoxes changed what I would prioritise in a verification system.
+I would preserve the original document, record the evidence behind each
+decision, test the extraction process, and provide a review path for
+uncertain or conflicting cases. Extra checks introduce costs in latency,
+computation and human attention, so their placement should follow the
+consequences of an error. My main lesson is that trustworthy automation
+requires input integrity, meaningful evaluation and clear accountability
+throughout the workflow. The agent's ability to explain its comparisons
+becomes useful when those comparisons remain connected to the document
+and the decision that people actually rely on.
+
 ### Reproducing the solution
 
 Validation completed on 18 October 2026 with Python 3.13.5: all six MCP tools
