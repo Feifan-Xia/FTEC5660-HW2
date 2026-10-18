@@ -1,0 +1,9 @@
+{
+  "loader": "hw2.cv_text / MarkItDown(enable_plugins=False)",
+  "pages": 1,
+  "extracted_text_identical_to_control": true,
+  "extracted_degree": "BSc in Finance",
+  "rendered_degree": "MSc in Finance",
+  "pdf_sha256": "e94c33c37ffcedb947c8013987e0e20a080897ebf8205dc5b279be9ebe81093a",
+  "text_sha256": "aafa31b569f47bcee23bce02858dfd517081ed33c4049b09b6d28c4fa3483f55"
+}

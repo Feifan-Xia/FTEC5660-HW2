@@ -1,0 +1,115 @@
+{
+  "model": "deepseek-v4-flash",
+  "started_utc": "20261018T151601Z",
+  "runs": [
+    {
+      "dataset": "public_test",
+      "repeat": 1,
+      "returncode": 0,
+      "seconds": 171.61,
+      "scores": {
+        "CV_1.pdf": 0.95,
+        "CV_2.pdf": 0.95,
+        "CV_3.pdf": 0.95,
+        "CV_4.pdf": 0.05,
+        "CV_5.pdf": 0.05,
+        "CV_6.pdf": 0.95,
+        "CV_7.pdf": 0.05
+      },
+      "correct": 7,
+      "total": 7,
+      "accuracy": 1.0,
+      "execution_failures": 0
+    },
+    {
+      "dataset": "public_test",
+      "repeat": 2,
+      "returncode": 0,
+      "seconds": 165.57,
+      "scores": {
+        "CV_1.pdf": 0.95,
+        "CV_2.pdf": 0.95,
+        "CV_3.pdf": 0.95,
+        "CV_4.pdf": 0.05,
+        "CV_5.pdf": 0.05,
+        "CV_6.pdf": 0.95,
+        "CV_7.pdf": 0.05
+      },
+      "correct": 7,
+      "total": 7,
+      "accuracy": 1.0,
+      "execution_failures": 0
+    },
+    {
+      "dataset": "public_test",
+      "repeat": 3,
+      "returncode": 0,
+      "seconds": 155.44,
+      "scores": {
+        "CV_1.pdf": 0.95,
+        "CV_2.pdf": 0.95,
+        "CV_3.pdf": 0.95,
+        "CV_4.pdf": 0.05,
+        "CV_5.pdf": 0.05,
+        "CV_6.pdf": 0.95,
+        "CV_7.pdf": 0.05
+      },
+      "correct": 7,
+      "total": 7,
+      "accuracy": 1.0,
+      "execution_failures": 0
+    },
+    {
+      "dataset": "task2",
+      "repeat": 1,
+      "returncode": 0,
+      "seconds": 30.32,
+      "scores": {
+        "adversarial_cv.pdf": 0.95,
+        "target_cv.pdf": 0.95
+      },
+      "attack_accepted": true,
+      "execution_failures": 0
+    },
+    {
+      "dataset": "task2",
+      "repeat": 2,
+      "returncode": 0,
+      "seconds": 29.97,
+      "scores": {
+        "adversarial_cv.pdf": 0.95,
+        "target_cv.pdf": 0.95
+      },
+      "attack_accepted": true,
+      "execution_failures": 0
+    },
+    {
+      "dataset": "task2",
+      "repeat": 3,
+      "returncode": 0,
+      "seconds": 28.11,
+      "scores": {
+        "adversarial_cv.pdf": 0.95,
+        "target_cv.pdf": 0.95
+      },
+      "attack_accepted": true,
+      "execution_failures": 0
+    }
+  ],
+  "source_sha256": "aec7478087065db6d771e83d2d20cbf25485e8276e217939cd9e3e5e2d6cd264",
+  "evaluated_git_commit": "f5d497d969cf7f91200010cb8ff407ecfdd267e7",
+  "checkout": "fresh clone, byte-identical hw2.py, credentials from environment",
+  "python": "3.13.5",
+  "packages": {
+    "langchain": "1.4.6",
+    "langchain-core": "1.6.12",
+    "langchain-deepseek": "1.1.1",
+    "langchain-mcp-adapters": "0.3.2",
+    "markitdown": "0.1.8",
+    "mcp": "1.30.0"
+  },
+  "provider_response_model_names": [
+    "deepseek-flash"
+  ],
+  "offline_tests_passed": 7
+}

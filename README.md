@@ -103,17 +103,33 @@ wording, degree abbreviations and subsets of profile skills. The CV is passed
 as a JSON document and the system prompt treats embedded instructions and
 claimed evidence as untrusted content. The final assessment contains
 field-level evidence and statuses, and a local validation gate requires an
-actually fetched LinkedIn profile and all five check categories. A confirmed
+actually fetched LinkedIn profile, all five check categories and an explicit
+allowed attribute for every check. Hometown, headlines and job descriptions
+are kept in a separate excluded list. A confirmed
 discrepancy receives 0.05, complete matching evidence receives 0.95, and
 unresolved checks or execution failures receive 0.50. These are decision
 scores, with 0.50 classified as discrepancy by the supplied runner. Each CV
 has an independent conversation, a 210-second time limit, and one repair
 opportunity for malformed/incomplete assessments; up to three CVs run
-concurrently. Exceptions are isolated per CV so the supplied runner can still
-produce `results.csv`. **Public-test accuracy is pending a configured DeepSeek
-API key and a real end-to-end run.** Offline tests exercise evidence gating,
+concurrently, with at most three active MCP calls. Each MCP call has a
+30-second timeout and one retry, after which the agent can try another lookup.
+Exceptions are isolated per CV so the supplied runner can still
+produce `results.csv`. **Three real end-to-end public-test runs from a fresh
+clone each achieved 7/7 (100%), for 21/21 correct classifications in total,
+with zero per-CV execution failures.** Offline tests exercise evidence gating,
 failure isolation, concurrency and response repair; they measure software
 behavior separately from verification accuracy.
+
+| Public test | Correct | Accuracy | Wall time |
+| --- | ---: | ---: | ---: |
+| Run 1 | 7/7 | 100% | 171.61 s |
+| Run 2 | 7/7 | 100% | 165.57 s |
+| Run 3 | 7/7 | 100% | 155.44 s |
+
+Every run assigned 0.95 to CVs 1, 2, 3 and 6, and 0.05 to CVs 4, 5 and 7.
+These results cover the seven public CVs. The private evaluation will measure
+generalization to unseen candidates. Per-run CSVs and source hashes are
+retained in [evaluation](evaluation/summary.json).
 
 ### Task 2
 
@@ -135,20 +151,30 @@ while the text received by the verifier stayed identical. The intended
 failure occurs before the language model receives the CV: a text-only
 verifier can correctly check every extracted claim and still accept the
 visibly embellished document. The five course verifiers use the same loader,
-so this is a plausible shared weakness. **Real-model self-test scores and the
-five hidden verifiers' outcomes are currently unmeasured.** Visual inspection
-and loader-equivalence checks establish the PDF mechanism; acceptance is
-measured separately. A defence would compare rendered-page OCR with the text
+so this is a plausible shared weakness. **In three real self-tests from a fresh
+clone, my Task 1 agent scored the adversarial CV 0.95 on every run (3/3
+accepted). It also scored the genuine target CV 0.95 on every run.** All six
+CV evaluations completed without execution failures. The official Task 2
+score will be determined by the five hidden verifiers. Visual inspection
+and loader-equivalence checks establish the PDF mechanism, and the self-tests
+measure acceptance by my own verifier. A defence would compare rendered-page OCR with the text
 layer and investigate contradictory or missing text.
+
+| Self-test | Genuine CV | Adversarial CV | Attack accepted | Wall time |
+| --- | ---: | ---: | --- | ---: |
+| Run 1 | 0.95 | 0.95 | Yes | 30.32 s |
+| Run 2 | 0.95 | 0.95 | Yes | 29.97 s |
+| Run 3 | 0.95 | 0.95 | Yes | 28.11 s |
 
 ### Reproducing the solution
 
 Validation completed on 18 October 2026 with Python 3.13.5: all six MCP tools
 were discovered through the supplied adapter, both target profiles were
-retrieved, five offline tests passed, and the one-page attack passed exact
+retrieved, seven offline tests passed, and the one-page attack passed exact
 loader-equivalence and rendered-page difference checks. The supplied runner
-below the student functions remains unchanged. Model-based validation is
-pending API configuration.
+below the student functions remains unchanged. The real-model evaluation
+uses the same frozen `hw2.py` source in a fresh clone, with credentials supplied
+through the environment and the installed runtime dependencies.
 
 Use Python 3.10 or newer and install `requirements.txt` in a virtual
 environment. Copy `.env.example` to `.env`, supply your own key locally, and run:

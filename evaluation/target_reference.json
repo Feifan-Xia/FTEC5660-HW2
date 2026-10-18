@@ -1,0 +1,16 @@
+{
+  "source": "https://ftec5660.ngrok.app/mcp",
+  "tool": "get_linkedin_profile",
+  "retrieved_at_utc": "2026-10-18T15:03:28.650608+00:00",
+  "id": 10001,
+  "name": "Kelly Tsang",
+  "education": [
+    {
+      "school": "HKUST",
+      "degree": "BSc",
+      "field": "Finance",
+      "start_year": 2012,
+      "end_year": 2016
+    }
+  ]
+}
