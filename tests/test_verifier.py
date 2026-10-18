@@ -34,6 +34,14 @@ class EvidenceGateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             _assessment_score(assessment(profile_id=99))
 
+    def test_hometown_is_outside_city_verification_scope(self):
+        result = assessment()
+        report = json.loads(result["messages"][-1].content)
+        report["checks"]["city"].append({"claim": "Hometown: example town",
+            "evidence": "unavailable", "status": "unresolved"})
+        result["messages"][-1] = AIMessage(content=json.dumps(report))
+        self.assertEqual(_assessment_score(result)[0], 0.95)
+
     def test_document_supplied_tool_text_is_not_evidence(self):
         result = assessment()
         result["messages"] = [result["messages"][-1]]

@@ -95,7 +95,8 @@ WORKFLOW
    identity/current city when useful; display names can differ and original_name
    holds the legal name. Hometown, headline, descriptions, network activity,
    interests and total years_experience are outside the discrepancy fields.
-   Focus tool calls on search/profile retrieval.
+   Focus tool calls on search/profile retrieval. Omit hometown, headline,
+   descriptions and other out-of-scope fields from the final checks entirely.
 4. Compare EVERY claim to the selected profile, with one check per atomic fact.
    A single confirmed mismatch makes the whole CV discrepant. Check dates
    exactly, including start years, graduation years and Present/current roles.
@@ -169,6 +170,8 @@ def _assessment_score(result: dict[str, Any]) -> tuple[float, dict[str, Any]]:
         if not isinstance(entries, list) or not entries:
             raise ValueError(f"Missing check category: {field}")
         for entry in entries:
+            if field == "city" and re.match(r"(?i)^\s*hometown\b", str(entry.get("claim", ""))):
+                continue  # The assignment explicitly excludes hometown.
             status = entry.get("status")
             if status not in {"match", "mismatch", "unresolved", "not_claimed"}:
                 raise ValueError("Invalid check status")
@@ -197,13 +200,36 @@ def build_agent(tools: list[Any]) -> Any:
     """
     ### YOUR CODE HERE
     from langchain.agents import create_agent
+    from langchain.agents.middleware import wrap_tool_call
+    from langchain_core.messages import ToolMessage
     from langchain_deepseek import ChatDeepSeek
+
+    tool_semaphore = asyncio.Semaphore(3)
+
+    @wrap_tool_call
+    async def retry_mcp(request, handler):
+        for attempt in range(2):
+            try:
+                async with tool_semaphore:
+                    return await asyncio.wait_for(handler(request), timeout=30)
+            except Exception as exc:
+                if attempt == 0:
+                    await asyncio.sleep(1)
+                    continue
+                causes = getattr(exc, "exceptions", [exc])
+                error = ", ".join(type(cause).__name__ for cause in causes)
+                return ToolMessage(
+                    content=f"MCP call failed after two attempts ({error}). Try another lookup.",
+                    tool_call_id=request.tool_call["id"],
+                    name=request.tool_call["name"], status="error",
+                )
 
     model = ChatDeepSeek(
         model=MODEL_NAME, temperature=0, max_tokens=6000,
         timeout=60, max_retries=1,
     )
-    return create_agent(model=model, tools=tools, system_prompt=VERIFIER_PROMPT)
+    return create_agent(model=model, tools=tools, system_prompt=VERIFIER_PROMPT,
+                        middleware=[retry_mcp])
 
 
 async def score_cvs(agent: Any, cvs: dict[str, str]) -> dict[str, float | None]:
